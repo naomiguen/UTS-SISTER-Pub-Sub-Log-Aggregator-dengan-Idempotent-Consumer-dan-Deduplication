@@ -1,0 +1,54 @@
+version: "3.9"
+
+# Docker Compose — memisahkan publisher dan aggregator sebagai dua service terpisah.
+# Jaringan internal default Compose digunakan (tidak ada akses ke internet).
+
+services:
+
+  #  Service 1: Aggregator 
+  aggregator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uts-aggregator
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount volume untuk persistensi SQLite dedup store
+      - dedup_data:/tmp
+    networks:
+      - internal_net
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  #  Service 2: Publisher (simulator) 
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile.publisher
+    container_name: uts-publisher
+    depends_on:
+      aggregator:
+        condition: service_healthy
+    environment:
+      - AGGREGATOR_URL=http://aggregator:8080
+    networks:
+      - internal_net
+    restart: "no"  # Publisher hanya berjalan sekali setelah aggregator siap
+
+#  Volumes 
+volumes:
+  dedup_data:
+    driver: local
+
+#  Networks ─
+networks:
+  internal_net:
+    driver: bridge
+    internal: false  # false agar bisa resolve nama service antar container
