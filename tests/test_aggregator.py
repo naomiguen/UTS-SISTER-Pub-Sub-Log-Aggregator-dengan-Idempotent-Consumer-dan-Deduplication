@@ -7,8 +7,10 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-# Gunakan DB terpisah untuk testing agar tidak konflik dengan production
-TEST_DB_PATH = Path("/tmp/test_dedup_store.db")
+import tempfile
+
+# Gunakan Windows-compatible temp directory
+TEST_DB_PATH = Path(tempfile.gettempdir()) / "test_dedup_store.db"
 
 
 @pytest.fixture(autouse=True)

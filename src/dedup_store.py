@@ -14,7 +14,6 @@ DB_PATH = Path(os.getenv("DEDUP_DB_PATH", "/tmp/dedup_store.db"))
 class DedupStore:
     def __init__(self, db_path: Path | None = None):
         self.db_path = db_path or DB_PATH
-        self.db_path = db_path
         self._lock = asyncio.Lock()  # Proteksi concurrent access dari asyncio coroutines
         self._conn: sqlite3.Connection | None = None
 

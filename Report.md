@@ -2,8 +2,10 @@
 ### Sistem Terdistribusi dan Parallel
 
 **Nama:** Naomi Ratna Marisaha Guen
+
 **NIM:** 11231069
-**Link Demo Program:** 
+
+**Link Demo Program:** [YouTube Video Demo](https://youtu.be/ZIe_7myALGY?si=n5A_Xf1rbMu7mvvE) 
 
 ---
 
@@ -66,6 +68,104 @@ Sistem yang dibangun adalah **Pub-Sub Log Aggregator** — sebuah layanan yang m
 | Consumer | `src/consumer.py` | asyncio.Queue + background task idempotent |
 | API | `src/main.py` | FastAPI dengan factory pattern `create_app()` |
 | Tests | `tests/test_aggregator.py` | 10 unit tests |
+
+---
+
+### Endpoint API
+
+Sistem menyediakan 4 endpoint utama yang dapat diakses melalui Swagger UI di `http://localhost:8080/docs`:
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| `GET` | `/health` | Health check container |
+| `POST` | `/publish` | Kirim batch/single event |
+| `GET` | `/events` | Ambil semua event unik yang diproses |
+| `GET` | `/events?topic=X` | Filter event berdasarkan topic |
+| `GET` | `/stats` | Metrik sistem real-time |
+
+#### POST /publish — Kirim Event
+
+**Request body:**
+```json
+{
+  "events": [
+    {
+      "topic": "system.auth.login_failed",
+      "event_id": "550e8400-e29b-41d4-a716-446655440000",
+      "timestamp": "2024-06-10T10:30:00Z",
+      "source": "auth-service",
+      "payload": {
+        "user_id": "usr_123",
+        "ip_address": "192.168.1.1"
+      }
+    }
+  ]
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "received": 1,
+  "message": "1 event diterima dan masuk antrian untuk diproses"
+}
+```
+
+![Swagger UI - POST /publish](./images/swagger-publish.png)
+
+#### GET /events — Ambil Event Unik
+
+Mengembalikan daftar event yang sudah berhasil diproses (duplikat sudah dibuang).
+
+```bash
+curl http://localhost:8080/events
+```
+```json
+{
+  "topic_filter": null,
+  "count": 3,
+  "events": [
+    {
+      "topic": "system.auth.login_failed",
+      "event_id": "550e8400-e29b-41d4-a716-446655440000",
+      "processed_at": 1718012400.123,
+      "source": "auth-service"
+    }
+  ]
+}
+```
+
+![Swagger UI - GET /events](./images/swagger-events.png)
+
+#### GET /stats — Metrik Sistem
+
+Menampilkan statistik aggregator secara real-time.
+
+```json
+{
+  "received": 6250,
+  "unique_processed": 5000,
+  "duplicate_dropped": 1250,
+  "duplicate_rate_pct": 20.0,
+  "topics": ["system.auth.login_failed", "system.payment.done"],
+  "uptime_seconds": 142.3,
+  "throughput_eps": 35.2
+}
+```
+
+![Swagger UI - GET /stats](./images/swagger-stats.png)
+
+#### GET /health — Health Check
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-06-10T10:30:05.123Z",
+  "uptime_seconds": 5.1
+}
+```
+
+![Swagger UI - GET /health](./images/swagger-health.png)
 
 ---
 

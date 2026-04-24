@@ -248,7 +248,7 @@ pip install -r requirements.txt
 python -m pytest tests/ -v
 ```
 
-Output yang diharapkan:
+Output:
 ```
 tests/test_aggregator.py::test_valid_event_schema_accepted            PASSED
 tests/test_aggregator.py::test_invalid_topic_format_rejected          PASSED
